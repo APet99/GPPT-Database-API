@@ -3,13 +3,19 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const saves = mongoose.connection.collection('saves');
 
+/*
+* Common functionality seen across multiple endpoints
+* */
 
-router.get('/', async (req, res, next) => {
-    res.status(200).send({'message': 'Hello World'})
-});
-
-
-//todo Is steam usernames case sensative?
+/*
+* Determines if a save exists, given a steamName and/or steamID.
+*
+* steamName: Display name belonging to a steam account.
+* steamID: 17 Digit unique steam identifier
+*
+* If both are given, the save MUST have a matching name and id to return true. If one of the two differs, the save does
+* not exist. If only one field is supplied, only that field would be queried.
+* */
 async function doesSaveExist(steamName = '', steamID = '') {
     if (!steamName && !steamID) {
         throw new Error('Steam Name or Steam ID not provided');
@@ -49,9 +55,18 @@ async function getByID(steamID) {
     }
 }
 
+// Sanity Check: Determine if the api is successfully being reached.
+router.get('/', async (req, res, next) => {
+    try {
+        res.status(200).send({'message': 'Request Successful'})
+    } catch (e) {
+        next(e);
+    }
+});
+
 
 /*CREATE*/
-router.route('/add').post(async (req, res, next) => {
+router.route('/add').post(async (req, res, next) => {       //todo what if body is none?
     const bodyData = req.body;
     try {
         res.status(200).send(await insertUser(bodyData));
@@ -62,6 +77,7 @@ router.route('/add').post(async (req, res, next) => {
 
 router.route('/addMultiple').post(async (req, res, next) => {
     const data = (req.body);
+
     try {
         for (let saveBox of data.ObjectStates[0].ContainedObjects) {
             await insertUser(saveBox);
@@ -78,9 +94,14 @@ router.route('/getByName').get(async (req, res, next) => {
     try {
         const steamName = req.query.steamName;
         if (!steamName) {
-            throw new Error('Steam Name not provided');
+            next('Steam Name not provided');
         }
-        res.send(await getByName(steamName));
+        const result = await getByName(steamName);
+        if (result){
+            res.send(await getByName(steamName));
+        }else{
+            res.status(204).send();
+        }
     } catch (e) {
         next(e);
     }
@@ -90,9 +111,14 @@ router.route('/getByID').get(async (req, res, next) => {
     try {
         const steamID = req.query.steamID;
         if (!steamID) {
-            throw new Error('Steam ID not provided');
+            next('Steam ID not provided');
         }
-        res.send(await getByID(steamID));
+        const result = await getByID(steamID);
+        if (result){
+            res.send(result);
+        }else{
+            res.status(204).send();
+        }
     } catch (e) {
         next(e);
     }
@@ -114,8 +140,12 @@ router.route('/get').get(async (req, res, next) => {
         if (steamID) {
             query.Description = {'$regex': `${steamID}`};
         }
-
-        res.send(await saves.findOne(query));
+        const result = await saves.findOne(query);
+        if (result){
+            res.send(await saves.findOne(query));
+        }else{
+            res.status(204).send();
+        }
     } catch (e) {
         next(e);
     }
@@ -132,7 +162,11 @@ router.route('/getMultipleByName').get(async (req, res, next) => {
                 result.push(instance);
             }
         }
-        res.status(200).send(result);
+        if(result.length == 0){
+            res.status(204).send();
+        }else{
+            res.status(200).send(result);
+        }
     } catch
         (e) {
         next(e);
@@ -151,8 +185,6 @@ router.route('/getAll').get(async (req, res, next) => {
     }
 });
 
-// todo Get al saves where (query)
-// todo Get all saves where not (query)
 
 /*UPDATE*/
 // Update an existing save's changes.
@@ -167,8 +199,6 @@ router.route('/updateName').put(async (req, res, next) => {
         next(e);
     }
 });
-
-// todo update last plated??
 
 router.route('/replaceByName').put(async (req, res, next) => {
     try {
@@ -198,31 +228,6 @@ router.route('/replaceByID').put(async (req, res, next) => {
     }
 });
 
-
-// Update All Saves
-// router.route('/addFieldToAll').put(async (req, res, next) => {
-//     try {
-//         const fieldName = req.query.fieldName;
-//         const value = req.query.fieldValue;
-//
-//         res.status(202).send(await saves.updateMany({}, {fieldName: value}, {upsert: true}))
-//     } catch (e) {
-//         next(e);
-//     }
-// })
-//
-// router.route('/updateFieldForAll').put(async (req, res, next) => {
-//     try {
-//         const fieldName = req.query.fieldName;
-//         const value = req.query.fieldValue;
-//
-//         res.status(202).send(await saves.updateMany({},{fieldName: value}, {upsert: false}))
-//     } catch (e) {
-//         next(e);
-//     }
-// })
-
-// todo Update Saves Where (query)
 
 /*DELETE*/
 router.route('/deleteByName').delete(async (req, res, next) => {
@@ -264,8 +269,6 @@ router.route('/deleteAll').delete(async (req, res, next) => {
     }
 });
 
-// todo Delete all saves where (query)
-
 router.route('/doesSaveExist').get(async (req, res) => {
     const data = req.query;
     const steamName = data.steamName;
@@ -273,7 +276,7 @@ router.route('/doesSaveExist').get(async (req, res) => {
 
     try {
         const result = await doesSaveExist(steamName, steamID);
-        res.status(200).send(result);
+        res.status(200).send({'exists': result});
     } catch (e) {
         res.status(400).send();
     }
