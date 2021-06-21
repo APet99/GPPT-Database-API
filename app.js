@@ -5,8 +5,6 @@ const logger = require('morgan');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const Auth = require('./models/Auth');
-
 const savesRouter = require('./routes/saves');
 const authRouter = require('./routes/auth');
 
