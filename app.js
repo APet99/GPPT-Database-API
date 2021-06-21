@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const savesRouter = require('./routes/saves');
 const authRouter = require('./routes/auth');
-
+const auth = mongoose.connection.collection('auths');
 const app = express();
 
 
@@ -23,7 +23,7 @@ function authentication(req, res, next) {
     }
 
 
-    Auth.countDocuments({'auth': authheader[1]}, function (err, count) {
+    auth.countDocuments({'auth': authheader[1]}, function (err, count) {
         if (count > 0 && authheader[0] === authMethod) {
             next();
         }else{
