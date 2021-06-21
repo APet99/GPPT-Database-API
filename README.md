@@ -26,7 +26,7 @@ Any requests that contain a JSON body, must also include the header ```content-t
 | ```/getByName ```         |steamName                                                              | Gets a save instance belonging to a steam name                                 |json object    |
 | ```/getByID```            |steamID                                                                | Gets a save instance belonging to a steam ID                                   |  json object  |
 | ```/get```                |steamName and/or steamID                                               | Gets a save instance belonging to a steam name and/or steam ID                 |  json object  |
-| ```/getMultipleByName```  |userNames: Array of steam IDs associated with saves to retrieve.       | Gets multiple save instances belonging to an array of steam names              |  json array   |
+| ```/getMultipleByName```  |userNames: Array of steam names associated with saves to retrieve.       | Gets multiple save instances belonging to an array of steam names              |  json array   |
 | ```/getAll```             |                                                                       | Gets all save instances                                                        |  json object  |
 | ```/doesSaveExist```      |steamName and/or steamID                                               | Determines if a save instance is found for a given steam name or steam ID      | json / boolean|
 
