@@ -246,8 +246,10 @@ router.route('/replaceByName').put(async (req, res, next) => {
         if (req.body._id) {
             delete req.body._id;
         }
-        if (getByName(name)) {
+        if (getByName(name) != null) {
             res.send(await saves.findOneAndReplace({'Nickname': name}, req.body));
+        }else{
+            res.send(await insertUser(bodyData.ObjectStates[0]));
         }
     } catch (e) {
         next(e);
