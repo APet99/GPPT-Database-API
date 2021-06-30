@@ -65,6 +65,7 @@ router.get('/', async (req, res, next) => {
 });
 
 
+
 /*CREATE*/
 router.route('/add').post(async (req, res, next) => {       //todo what if body is none?
     const bodyData = req.body;
@@ -87,6 +88,7 @@ router.route('/addMultiple').post(async (req, res, next) => {
         next(e);
     }
 });
+
 
 
 /*READ*/
@@ -186,6 +188,7 @@ router.route('/getAll').get(async (req, res, next) => {
 });
 
 
+
 /*UPDATE*/
 // Update an existing save's changes.
 router.route('/updateName').put(async (req, res, next) => {
@@ -227,6 +230,7 @@ router.route('/replaceByID').put(async (req, res, next) => {
         next(e);
     }
 });
+
 
 
 /*DELETE*/
