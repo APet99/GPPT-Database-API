@@ -258,13 +258,16 @@ router.route('/replaceByName').put(async (req, res, next) => {
 
 router.route('/replaceByID').put(async (req, res, next) => {
     try {
+        if(req.body == null){
+            res.status(400).send();
+        }
         const id = req.query.steamID;
         if (req.body._id) {
             delete req.body._id;
         }
 
         console.log(req.body)
-        if (getByID(id) != null) {
+        if (await getByID(id) != null) {
             res.send(await saves.findOneAndReplace({'Description': {'$regex': id}}, req.body));
         }else{
             res.send(await insertUser(req.body));
