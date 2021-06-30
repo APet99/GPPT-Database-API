@@ -85,7 +85,8 @@ router.get('/', async (req, res, next) => {
 router.route('/add').post(async (req, res, next) => {       //todo what if body is none?
     const bodyData = req.body;
     try {
-        res.status(200).send(await insertUser(bodyData));
+        console.log(odyData.ObjectStates[0])
+        res.status(200).send(await insertUser(bodyData.ObjectStates[0]));
     } catch (e) {
         next(e);
     }
