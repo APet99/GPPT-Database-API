@@ -245,10 +245,8 @@ router.route('/replaceByName').put(async (req, res, next) => {
         if (req.body._id) {
             delete req.body._id;
         }
-        if (await getByName(name)) {
+        if (getByName(name)) {
             res.send(await saves.findOneAndReplace({'Nickname': name}, req.body));
-        }else{
-            res.send(await saves.insertOne( req.body));
         }
     } catch (e) {
         next(e);
