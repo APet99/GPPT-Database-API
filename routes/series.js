@@ -1,4 +1,3 @@
-require('./tournaments')
 // import {getTournamentResults} from "./tournaments";
 
 const express = require('express');

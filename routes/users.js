@@ -6,40 +6,47 @@ const saves = mongoose.connection.collection('saves');
 
 
 async function createUser(steamName, steamID, discordName = null, vipStartDate = null, vipEndDate = null) {
+    try {
+        let Nickname = steamName;
 
-    let Nickname = steamName;
-    let userID = steamID;
-    let save = (await saves.findOne({'Description': {'$regex': userID}}))._id;
+        let userID = steamID;
+        // console.log(Nickname, userID);
+        let save = (await saves.findOne({'Description': {'$regex': `${userID}`}}))._id;
+        // console.log(save);
+        if (Nickname == null || userID == null) {
+            console.log(Nickname, userID);
+            return;
+        }
 
-    if (Nickname == null || userID == null) {
-        console.log(Nickname, userID);
-        return;
+        if (!await userExists(Nickname, userID)) {
+            let dName = discordName != null ? discordName : '';
+            let vipStart = vipStartDate != null ? vipStartDate : new Date('1970-01-01');
+            let vipEnd = vipEndDate != null ? vipEndDate : new Date('1970-01-01');
+
+
+            let result = await users.insertOne({
+                'Nickname': Nickname,
+                'steamID': userID[0],
+                'discordName': dName,
+                'vipStartDate': vipStart,
+                'vipEndDate': vipEnd,
+                'save': save,
+                'banned': false
+            });
+            if (result != null) {
+                return result
+            }
+        }
+    } catch (e) {
+
     }
-    let dName = discordName != null ? discordName : '';
-    let vipStart = vipStartDate != null ? vipStartDate : new Date('1970-01-01');
-    let vipEnd = vipEndDate != null ? vipEndDate : new Date('1970-01-01');
-
-
-    let result = await users.insertOne({
-        'Nickname': Nickname,
-        'steamID': userID,
-        'discordName': dName,
-        'vipStartDate': vipStart,
-        'vipEndDate': vipEnd,
-        'save': save,
-        'banned': false
-    });
-    if (result != null) {
-        return result
-    }
-
 }
 
 async function userExists(steamName, steamID) {
     let q1 = await users.findOne({'Nickname': steamName});
     let q2 = await users.findOne({'steamID': steamID});
 
-    return (q1 !== null && q1 !== undefined) || (q2 !== null && q2 !== undefined);
+    return (q1 !== null) || (q2 !== null);
 }
 
 //Create
@@ -47,10 +54,10 @@ router.post('/add', async (req, res, next) => {
     try {
         let Nickname = req.query.steamName;
         let userID = req.query.steamID;
-        let startDate = req.query.vipStartDate != null? req.query.vipStartDate.split('/'): null;
-        let endDate = req.query.vipEndDate != null? req.query.vipEndDate.split('/'): null;
+        let startDate = req.query.vipStartDate != null ? req.query.vipStartDate.split('/') : null;
+        let endDate = req.query.vipEndDate != null ? req.query.vipEndDate.split('/') : null;
         let s = (await saves.findOne({'Description': {'$regex': userID}}));
-        let save = s != null && s !== undefined? s._id: null;
+        let save = s != null && s !== undefined ? s._id : null;
 
         if (Nickname == null || userID == null) {
             next('Can not add user without username and/or ID');
@@ -223,7 +230,6 @@ router.get('/isBannedName', async (req, res, next) => {
 });
 
 
-
 //Update
 router.put('/update', async (req, res, next) => {
     try {
@@ -335,3 +341,5 @@ router.delete('/deleteAll', async (req, res, next) => {
 
 
 module.exports = router;
+module.exports.cUser = createUser;
+

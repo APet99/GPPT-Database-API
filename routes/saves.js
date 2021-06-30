@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const saves = mongoose.connection.collection('saves');
-
+const users = mongoose.connection.collection('users');
+const usr = require('./users');
 /*
 * Common functionality seen across multiple endpoints
 * */
@@ -36,7 +37,12 @@ async function doesSaveExist(steamName = '', steamID = '') {
 }
 
 async function insertUser(json) {
-    return await saves.insertOne(json)
+    let Nickname = json['Nickname'];
+    let re = /\d{17}/;
+    let id = re.exec(json["Description"]);
+    let result = await saves.insertOne(json);
+    await usr.cUser(Nickname, id);
+    return result;
 }
 
 async function getByName(steamName) {
@@ -53,6 +59,15 @@ async function getByID(steamID) {
     } catch (e) {
         console.log(e);
     }
+}
+
+async function getAllSaves(){
+    try {
+        return await saves.find({}).toArray();
+    } catch (e) {
+        console.log(e);
+    }
+
 }
 
 // Sanity Check: Determine if the api is successfully being reached.
@@ -187,7 +202,28 @@ router.route('/getAll').get(async (req, res, next) => {
     }
 });
 
+router.route('/getSavesWithoutUser').get(async(req, res, next)=>{
+    let result = [];
+    let saves = await getAllSaves();
+    let re = /\d{17}/;
 
+    for(let save of saves){
+        let id = re.exec(save["Description"]);
+
+        let associatedByID = await users.findOne({'steamID': id});
+        let associatedByName = await users.findOne({'Nickname': save.Nickname});
+
+        if(associatedByID == null){
+            result.push({id: save._id, Nickname: save.Nickname});
+        }else if(associatedByName == null){
+            result.push({id: save._id, id: id});
+        }
+
+
+
+        res.status(200).send({result});
+    }
+});
 
 /*UPDATE*/
 // Update an existing save's changes.
@@ -209,8 +245,10 @@ router.route('/replaceByName').put(async (req, res, next) => {
         if (req.body._id) {
             delete req.body._id;
         }
-        if (getByName(name)) {
+        if (await getByName(name)) {
             res.send(await saves.findOneAndReplace({'Nickname': name}, req.body));
+        }else{
+            res.send(await saves.insertOne( req.body));
         }
     } catch (e) {
         next(e);
@@ -288,3 +326,4 @@ router.route('/doesSaveExist').get(async (req, res) => {
 
 
 module.exports = router;
+
