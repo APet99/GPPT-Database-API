@@ -262,8 +262,10 @@ router.route('/replaceByID').put(async (req, res, next) => {
         if (req.body._id) {
             delete req.body._id;
         }
-        if (getByID(id)) {
+        if (getByID(id) != null) {
             res.send(await saves.findOneAndReplace({'Description': {'$regex': id}}, req.body));
+        }else{
+            res.send(await insertUser(bodyData.ObjectStates[0]));
         }
     } catch (e) {
         next(e);
