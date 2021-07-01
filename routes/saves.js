@@ -42,6 +42,7 @@ async function insertUser(json) {
     let id = re.exec(json["Description"]);
     let result = await saves.insertOne(json);
     await usr.cUser(Nickname, id);
+    console.log('Inserted user: ' , json['Nickname'], json['Description']);
     return result;
 }
 
@@ -267,9 +268,13 @@ router.route('/replaceByID').put(async (req, res, next) => {
         }
 
         console.log(req.body)
-        if (await getByID(id) != null) {
+        let found = await getByID(id);
+
+        if ( found != null) {
+            console.log('Replaced for', id);
             res.send(await saves.findOneAndReplace({'Description': {'$regex': id}}, req.body));
         }else{
+            console.log('Inserted new for', id);
             res.send(await insertUser(req.body));
         }
     } catch (e) {
