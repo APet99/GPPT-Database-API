@@ -262,7 +262,8 @@ router.route('/replaceByID').put(async (req, res, next) => {
         if(req.body == null){
             res.status(400).send();
         }
-        const id = req.query.steamID;
+        let re = /\d{17}/;
+        const id = re.exec(req.query.steamID);
         if (req.body._id) {
             delete req.body._id;
         }
