@@ -20,12 +20,19 @@ async function getTournamentResults(tournamentName){
 router.post('/create', async (req, res, next) => {
     try {
         let tournamentName = req.query.tournamentName;
-        let tDate = req.query.tournamentDate !== null && req.query.tournamentDate !== undefined? req.query.tournamentDate.split('/'): null;
+        let tTime = req.query.tournamentTime !== null? req.query.tournamentTime.split(':'): [0,0];
+
         let d = new Date();
 
-        let tournamentDate = req.query.tournamentDate != null? new Date(tDate[0], tDate[1] - 1, tDate[2]): new Date(d.getFullYear(), d.getMonth()- 1, d.getDate());
-        let week = req.query.week ? req.query.week : 0;
+        let tournamentDate  = new Date(d.getFullYear(), d.getMonth(),d.getDate(), tTime[0] - 3, tTime[1], 0,0); // -3 specifies the time difference from UTC -> EST
 
+        // tournamentDate.setMinutes(tournamentDate.getMinutes() + tournamentDate.getTimezoneOffset());
+
+        console.log(tournamentDate)
+
+        // console.log(tournamentDate, tournamentDate.toUTCString())
+
+        let week = req.query.week ? req.query.week : 0;
         let response = await tournaments.insertOne({
             name: tournamentName,
             date: tournamentDate,
@@ -61,7 +68,7 @@ router.get('/getByName', async (req, res, next) => {
         if (response !== null && response !== undefined) {
             res.status(200).send(response);
         }
-        res.status(404).send();
+        res.status(204).send();
     } catch (e) {
         next(e);
     }

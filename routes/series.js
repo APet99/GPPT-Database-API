@@ -63,14 +63,18 @@ todo:
 
 //Helpers
 async function getTournaments(seriesName) {
-    let s = await series.findOne({'series': seriesName});
-    let result = []
+    try {
+        let s = await series.findOne({'series': seriesName});
+        let result = []
 
-    for (let tourney of s.tournaments) {
-        result.push(await tournaments.findOne({'_id': (tourney.tournamentID)}));
+        for (let tourney of s.tournaments) {
+            result.push(await tournaments.findOne({'_id': (tourney.tournamentID)}));
+        }
+        // console.log(result)
+        return result;
+    }catch(e){
+
     }
-    // console.log(result)
-    return result;
 }
 
 
@@ -78,12 +82,12 @@ async function getTournaments(seriesName) {
 router.post('/create', async (req, res, next) => {
     try {
         const seriesName = req.query.seriesName;
-        let sDate = req.query.startDate.split('/'); //todo Whhen not specified: TypeError: Cannot read property 'split' of undefined
+        let sDate = req.query.startDate.split('/'); //todo When not specified: TypeError: Cannot read property 'split' of undefined
         let eDate = req.query.endDate.split('/');
 
-        console.log(eDate)
-        let start = req.query.startDate !== null ? new Date(sDate[0], sDate[1] - 1, sDate[2]) : new Date('1970-01-01');
-        let end = req.query.endDate !== null ? new Date(eDate[0], eDate[1] - 1, eDate[2]) : new Date('1970-01-01');
+        console.log(seriesName)
+        let start = req.query.startDate !== null ? new Date(sDate[0], sDate[1] - 1, sDate[2], 0, 0, 0) : new Date('1970-01-01');
+        let end = req.query.endDate !== null ? new Date(eDate[0], eDate[1] - 1, eDate[2],0,0,0) : new Date('1970-01-01');
 
         const result = await series.insertOne({
             series: seriesName,
@@ -114,7 +118,13 @@ router.get('/', async (req, res, next) => {
 router.get('/get', async (req, res, next) => {
     //todo
     try {
-        return res.status(200).send(await series.findOne({'series': req.query.seriesName}));
+        let result = await series.findOne({'series': req.query.seriesName});
+        if(result != null){
+            return res.status(200).send(result);
+        }else{
+            return res.status(204).send();
+        }
+
     } catch (e) {
         next(e);
     }
@@ -202,16 +212,21 @@ router.put('/addTournament', async (req, res, next) => {
 
 
         let s = await series.findOne({'series': seriesName});
-        let tournamentList = s.tournaments;
-
+        console.log(s)
+        let tournamentList = s.tournaments !== null? s.tournaments: null;
+        let seen = [];
 
         if (tournamentList == null) {
             tournamentList = [tournament];
         } else {
             for (let i = 0; i < tournamentList.length; i++) {
-                if (tournamentList[i].name === tournamentName) {
-                    next('Tournament is already in the series');
-                    break;
+                seen.push(tournamentList[i].tournamentID);
+            }
+
+            for (let t of seen){
+                if(toString(t) === toString(tournament._id)){
+                    next("ERR")
+                    return;
                 }
             }
 
@@ -224,7 +239,8 @@ router.put('/addTournament', async (req, res, next) => {
         if (result != null) {
             res.status(200).send(result);
         } else {
-            next('Unable to remove tournament from series');
+            res.status(204).send();
+            return;
         }
 
     } catch (e) {

@@ -169,6 +169,8 @@ router.get('/getByDiscord', async (req, res, next) => {
     }
 });
 
+//todo get all
+
 router.get('/vipStatusID', async (req, res, next) => {
     try {
         const id = req.query.steamID;
@@ -219,6 +221,7 @@ router.get('/isBannedName', async (req, res, next) => {
     }
 });
 
+//todo change endpoint
 router.get('/isBannedName', async (req, res, next) => {
     try {
         let banStatus = (await users.findOne({'Nickname': req.query.steamName})).banned;

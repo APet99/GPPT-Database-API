@@ -10,6 +10,8 @@ const express = require('express');
 const logger = require('morgan');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
+const cors = require('cors')
+var fs = require('fs');
 
 
 // require('./discord/bot');
@@ -17,6 +19,7 @@ require('dotenv').config();
 
 const token = process.env.TOKEN;
 const prefix = process.env.PREFIX;
+const saves = mongoose.connection.collection('saves');
 
 /*
 * savesRouter: All endpoints begining with /saves/ will be directed here. API for save data manipulation.
@@ -100,6 +103,7 @@ app.use(helmet());
 app.use(logger('dev'));
 app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({limit: '50mb', extended: true}));
+app.use(cors())
 
 app.use('/', indexRouter);
 app.use('/saves', authentication, savesRouter);
