@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 const saves = mongoose.connection.collection('saves');
 const users = mongoose.connection.collection('users');
 const usr = require('./users');
+const fs = require('fs');
+const path = require("path");
+
 /*
 * Common functionality seen across multiple endpoints
 * */
@@ -36,6 +39,28 @@ async function doesSaveExist(steamName = '', steamID = '') {
     return numDoc > 0;
 }
 
+
+async function canReceiveVIPDaily(steamID){
+
+    try {
+        const id = steamID;
+
+        let query = await users.findOne({'steamID': id})
+        if (query != null) {
+            let d = new Date();
+            let today = new Date(d.getFullYear(), d.getMonth(),d.getDate(),0,0,0);
+            if(query.vipEndDate >= today){
+                if(query['lastVIPDaily'] != null && query['lastVIPDaily'] < today){
+                    return true;
+                }
+            }
+        }
+        return false;
+    } catch (e) {
+        //nothing
+    }
+}
+
 async function insertUser(json) {
     let Nickname = json['Nickname'];
     let re = /\d{17}/;
@@ -56,7 +81,30 @@ async function getByName(steamName) {
 
 async function getByID(steamID) {
     try {
-        return await saves.findOne({'Description': {'$regex': steamID}});
+        let user = await users.findOne({'steamID': steamID});
+
+        if (! user['banned']){
+            let save = await saves.findOne({'Description': {'$regex': steamID}});
+
+            if (await canReceiveVIPDaily(steamID)){
+                console.log('HERE')
+                save['ContainedObjects'].unshift(await JSON.parse(await fs.readFileSync(path.join(__dirname, '../content/VIP Daily.json'))));
+                try {
+                    let d = new Date();
+
+                    let response = await users.findOneAndUpdate({'steamID': steamID}, {$set:{lastVIPDaily: new Date(d.getFullYear(), d.getMonth(),d.getDate(),0,0,0)}});
+
+                    if (response == null) {
+                        console.log("Error Updating last VIP Daily Date for ", steamID)
+                    }
+                }catch(e){
+                    console.log(e)
+                    // noting
+                }
+            }
+            return save;
+        }
+
     } catch (e) {
         console.log(e);
     }

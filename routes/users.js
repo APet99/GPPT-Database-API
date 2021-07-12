@@ -31,7 +31,8 @@ async function createUser(steamName, steamID, discordName = null, vipStartDate =
                 'vipStartDate': vipStart,
                 'vipEndDate': vipEnd,
                 'save': save,
-                'banned': false
+                'banned': false,
+                'lastVIPDaily':new Date('1970-01-01')
             });
             if (result != null) {
                 return result
@@ -47,6 +48,24 @@ async function userExists(steamName, steamID) {
     let q2 = await users.findOne({'steamID': steamID});
 
     return (q1 !== null) || (q2 !== null);
+}
+
+async function canReceiveVIPDaily(steamID){
+    try {
+        const id = req.query.steamID;
+
+        let query = await users.findOne({'steamID': id})
+        if (query != null) {
+            if(query.vipEndDate >= Date.now()){
+                if(query['lastVIPDaily'] != null && query['lastVIPDaily'] < Date.now()){
+                    return true;
+                }
+            }
+        }
+        return false;
+    } catch (e) {
+        //nothing
+    }
 }
 
 //Create
@@ -80,7 +99,8 @@ router.post('/add', async (req, res, next) => {
             'vipStartDate': vipStartDate,
             'vipEndDate': vipEndDate,
             'save': save,
-            'banned': false
+            'banned': false,
+            'lastVIPDaily':new Date('1970-01-01')
         });
 
         if (result != null) {
@@ -111,6 +131,9 @@ router.post('/addAllFromSaves', async (req, res, next) => {
     res.status(200).send();
 });
 
+router.post('/addFieldToAll', async (req, res, next) => {
+    await users.update({}, {$set: {lastVIPDaily: new Date('1970-01-01')}},{upsert:false, multi:true});
+});
 
 //Read
 // Sanity Check: Determine if the api is successfully being reached.
@@ -167,6 +190,19 @@ router.get('/getByDiscord', async (req, res, next) => {
     } catch (e) {
         next(e);
     }
+});
+
+router.get('/canReceiveVIPDaily', async (req, res, next)=>{
+    try {
+        const id = req.query.steamID;
+
+        let result = await canReceiveVIPDaily(id);
+        res.status(200).send({'canReceiveVIPDaily': result});
+
+    } catch (e) {
+        next(e);
+    }
+
 });
 
 //todo get all
@@ -345,4 +381,5 @@ router.delete('/deleteAll', async (req, res, next) => {
 
 module.exports = router;
 module.exports.cUser = createUser;
+
 
