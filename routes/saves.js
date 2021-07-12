@@ -88,7 +88,7 @@ async function getByID(steamID) {
 
             if (await canReceiveVIPDaily(steamID)){
                 console.log('HERE')
-                save['ContainedObjects'].unshift(await JSON.parse(await fs.readFileSync(path.join(__dirname, '../content/VIP Daily.json'))));
+                save['ContainedObjects'].push(await JSON.parse(await fs.readFileSync(path.join(__dirname, '../content/VIP Daily.json'))));
                 try {
                     let d = new Date();
                     let response = await users.findOneAndUpdate({'steamID': steamID}, {$set:{lastVIPDaily: new Date(new Date(d.getFullYear(), d.getMonth(),d.getDate(),0,0,0).toUTCString())}});
