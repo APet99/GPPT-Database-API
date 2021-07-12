@@ -49,6 +49,8 @@ async function canReceiveVIPDaily(steamID){
         if (query != null) {
             let d = new Date();
             let today = new Date(new Date(d.getFullYear(), d.getMonth(),d.getDate(),0,0,0).toUTCString());
+            console.log('fromMongo: ', query['lastVIPDaily'])
+            console.log('today: ', today)
             if(query.vipEndDate >= today){
                 if(query['lastVIPDaily'] != null && query['lastVIPDaily'] < today){
                     return true;
@@ -93,6 +95,7 @@ async function getByID(steamID) {
                     let d = new Date();
                     let response = await users.findOneAndUpdate({'steamID': steamID}, {$set:{lastVIPDaily: new Date(new Date(d.getFullYear(), d.getMonth(),d.getDate(),0,0,0).toUTCString())}});
 
+                    console.log('date Added: ', new Date(new Date(d.getFullYear(), d.getMonth(),d.getDate(),0,0,0).toUTCString()))
                     if (response == null) {
                         console.log("Error Updating last VIP Daily Date for ", steamID)
                     }
