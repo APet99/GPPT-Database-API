@@ -48,7 +48,7 @@ async function canReceiveVIPDaily(steamID){
         let query = await users.findOne({'steamID': id})
         if (query != null) {
             let d = new Date();
-            let today = new Date(new Date(d.getFullYear(), d.getMonth(),d.getDate(),0,0,0).toUTCString());
+            let today = new Date(new Date(d.getFullYear(), d.getMonth(),d.getDate(),0,0,0).toLocaleString('en-US', {timeZone:'America/New_York'}));
             console.log('fromMongo: ', query['lastVIPDaily'])
             console.log('today: ', today)
             if(query.vipEndDate >= today){
@@ -93,7 +93,7 @@ async function getByID(steamID) {
                 save['ContainedObjects'].push(await JSON.parse(await fs.readFileSync(path.join(__dirname, '../content/VIP Daily.json'))));
                 try {
                     let d = new Date();
-                    let response = await users.findOneAndUpdate({'steamID': steamID}, {$set:{lastVIPDaily: new Date(new Date(d.getFullYear(), d.getMonth(),d.getDate(),0,0,0).toUTCString())}});
+                    let response = await users.findOneAndUpdate({'steamID': steamID}, {$set:{lastVIPDaily: new Date(new Date(d.getFullYear(), d.getMonth(),d.getDate(),0,0,0).toLocaleString('en-US', {timeZone:'America/New_York'}))}});
 
                     console.log('date Added: ', new Date(new Date(d.getFullYear(), d.getMonth(),d.getDate(),0,0,0).toUTCString()))
                     if (response == null) {
